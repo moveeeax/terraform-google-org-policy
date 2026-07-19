@@ -9,7 +9,7 @@ value rules.
 
 ```hcl
 module "org_policy" {
-  source = "github.com/cybercapybara/terraform-google-org-policy"
+  source = "github.com/moveeeax/terraform-google-org-policy"
 
   project_id       = var.project_id
   constraint       = "compute.requireOsLogin"
