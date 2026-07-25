@@ -14,12 +14,28 @@ provider "google" {
   region  = var.region
 }
 
+# Boolean constraint: enforced by default.
 module "org_policy" {
   source = "../.."
 
   project_id       = var.project_id
   constraint       = "compute.requireOsLogin"
   boolean_enforced = true
+}
+
+# List constraint: narrows the allowed locations. inherit_from_parent keeps any
+# stricter rule set on the folder or organization in the effective policy —
+# without it this project policy would silently replace it.
+module "resource_locations" {
+  source = "../.."
+
+  project_id          = var.project_id
+  constraint          = "gcp.resourceLocations"
+  inherit_from_parent = true
+
+  rules = [{
+    allowed_values = ["in:us-locations"]
+  }]
 }
 
 variable "project_id" {
@@ -35,4 +51,8 @@ variable "region" {
 
 output "policy_name" {
   value = module.org_policy.name
+}
+
+output "resource_locations_policy_name" {
+  value = module.resource_locations.name
 }
