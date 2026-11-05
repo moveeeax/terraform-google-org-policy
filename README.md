@@ -11,7 +11,7 @@ value rules.
 
 ```hcl
 module "os_login" {
-  source = "github.com/moveeeax/terraform-google-org-policy"
+  source = "github.com/moveeeax/terraform-google-org-policy?ref=v1.0.0"
 
   project_id       = var.project_id
   constraint       = "compute.requireOsLogin"
@@ -28,7 +28,7 @@ policy name is built, because the API expects the bare form in
 
 ```hcl
 module "resource_locations" {
-  source = "github.com/moveeeax/terraform-google-org-policy"
+  source = "github.com/moveeeax/terraform-google-org-policy?ref=v1.0.0"
 
   project_id = var.project_id
   constraint = "gcp.resourceLocations"
