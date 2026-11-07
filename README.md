@@ -58,6 +58,37 @@ for `parent = "projects/x"` and builds the same policy name, so switching an
 existing project policy from one form to the other plans no change. Folders and
 organizations are addressed by numeric ID.
 
+### Dry run
+
+```hcl
+module "resource_locations_dry_run" {
+  source = "github.com/moveeeax/terraform-google-org-policy?ref=v1.0.0"
+
+  parent     = "organizations/123456789012"
+  constraint = "gcp.resourceLocations"
+
+  # Ship the dry-run spec only: violations are logged, nothing is blocked.
+  enforce = false
+
+  dry_run = {
+    rules               = [{ allowed_values = ["in:eu-locations"] }]
+    inherit_from_parent = true
+  }
+}
+```
+
+`dry_run` renders `dry_run_spec`. Its `rules` take the same shape and pass the
+same validation as `rules`; there is no boolean fallback, so a boolean
+constraint uses `rules = [{ enforce = true }]`. With `enforce` left at `true`
+the dry-run spec is set next to the live policy, for example to trial a stricter
+version of an existing one. `enforce = false` drops the live
+`spec`, and it is rejected unless `dry_run` is set, since the policy would then
+carry no rules at all. Once the audit logs look clean, move the rules into
+`rules` and set `enforce` back to `true`.
+
+`enforce` is not `boolean_enforced`: `enforce` decides whether the live spec
+exists, `boolean_enforced` is the value of the boolean rule inside it.
+
 A runnable example lives in [`examples/basic`](examples/basic).
 
 ## Semantics you need to get right
@@ -118,6 +149,8 @@ consuming the module still needs no more than 1.5.
 | `boolean_enforced`    | For boolean constraints, whether the constraint is enforced.                   | `bool`         | `true`  |    no    |
 | `inherit_from_parent` | For list constraints, merge with policies inherited from the parent.           | `bool`         | `null`  |    no    |
 | `rules`               | Optional list of policy rules overriding the boolean rule.                     | `list(object)` | `null`  |    no    |
+| `enforce`             | Whether the live `spec` is applied; `false` ships the dry-run spec only.       | `bool`         | `true`  |    no    |
+| `dry_run`             | Optional dry-run spec: `rules` (same shape as `rules`), `inherit_from_parent`. | `object`       | `null`  |    no    |
 
 ¹ Exactly one of `project_id` and `parent` must be set.
 

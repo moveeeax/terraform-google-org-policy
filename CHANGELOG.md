@@ -12,6 +12,9 @@ All notable changes to this module are documented here. The format follows
   organization (`organizations/<id>`) as well as a project. `project_id` stays
   as shorthand for `parent = "projects/<id>"` and is now optional; exactly one
   of the two must be set. Existing `project_id` callers plan no change.
+- `dry_run` input rendering `dry_run_spec` (`rules` with the same shape and
+  validation as `rules`, optional `inherit_from_parent`), and `enforce`
+  (default `true`) to drop the live `spec` and ship the dry-run spec only.
 
 ### Changed
 
