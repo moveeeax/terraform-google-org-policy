@@ -1,10 +1,26 @@
 variable "project_id" {
-  description = "ID of the project the organization policy is applied to."
+  description = "ID of the project the organization policy is applied to. Shorthand for parent = \"projects/<project_id>\"; set exactly one of project_id or parent."
   type        = string
+  default     = null
 
   validation {
-    condition     = length(trimspace(var.project_id)) > 0
+    condition     = var.project_id == null || try(length(trimspace(var.project_id)) > 0, false)
     error_message = "project_id must not be empty."
+  }
+}
+
+variable "parent" {
+  description = <<-EOT
+    Resource the policy is attached to: "projects/<id or number>",
+    "folders/<folder_id>" or "organizations/<org_id>". The policy name is built
+    as "<parent>/policies/<constraint>". Set exactly one of parent or project_id.
+  EOT
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.parent == null || can(regex("^(projects/[a-z0-9][a-z0-9:.-]*|folders/[0-9]+|organizations/[0-9]+)$", var.parent))
+    error_message = "parent must be \"projects/<id>\", \"folders/<numeric id>\" or \"organizations/<numeric id>\", e.g. \"folders/123456789012\"."
   }
 }
 

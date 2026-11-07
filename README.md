@@ -1,9 +1,9 @@
 # terraform-google-org-policy
 
 Terraform module that manages a [Google Cloud](https://cloud.google.com/)
-organization policy (`google_org_policy_policy`) at the project level. It
-supports simple boolean constraints and, for list constraints, allow/deny
-value rules.
+organization policy (`google_org_policy_policy`) on a project, a folder or the
+organization. It supports simple boolean constraints and, for list constraints,
+allow/deny value rules.
 
 ## Usage
 
@@ -41,6 +41,22 @@ module "resource_locations" {
   }]
 }
 ```
+
+### Folder or organization
+
+```hcl
+module "org_os_login" {
+  source = "github.com/moveeeax/terraform-google-org-policy?ref=v1.0.0"
+
+  parent     = "organizations/123456789012" # or "folders/<id>", "projects/<id>"
+  constraint = "compute.requireOsLogin"
+}
+```
+
+Set exactly one of `project_id` and `parent`. `project_id = "x"` is shorthand
+for `parent = "projects/x"` and builds the same policy name, so switching an
+existing project policy from one form to the other plans no change. Folders and
+organizations are addressed by numeric ID.
 
 A runnable example lives in [`examples/basic`](examples/basic).
 
@@ -96,11 +112,14 @@ consuming the module still needs no more than 1.5.
 
 | Name                  | Description                                                                    | Type           | Default | Required |
 |-----------------------|--------------------------------------------------------------------------------|----------------|---------|:--------:|
-| `project_id`          | ID of the project the policy is applied to.                                    | `string`       | n/a     |   yes    |
+| `project_id`          | ID of the project the policy is applied to; shorthand for `parent`.            | `string`       | `null`  |   no¹    |
+| `parent`              | `projects/<id>`, `folders/<id>` or `organizations/<id>` to attach to.          | `string`       | `null`  |   no¹    |
 | `constraint`          | Constraint the policy enforces, with or without the `constraints/` prefix.     | `string`       | n/a     |   yes    |
 | `boolean_enforced`    | For boolean constraints, whether the constraint is enforced.                   | `bool`         | `true`  |    no    |
 | `inherit_from_parent` | For list constraints, merge with policies inherited from the parent.           | `bool`         | `null`  |    no    |
 | `rules`               | Optional list of policy rules overriding the boolean rule.                     | `list(object)` | `null`  |    no    |
+
+¹ Exactly one of `project_id` and `parent` must be set.
 
 `rules` element shape:
 

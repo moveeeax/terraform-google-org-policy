@@ -220,3 +220,106 @@ run "rejects_allow_all_false" {
 
   expect_failures = [var.rules]
 }
+
+# --- parent -------------------------------------------------------------------
+
+run "folder_parent_builds_the_folder_policy_name" {
+  variables {
+    project_id = null
+    parent     = "folders/123456789012"
+  }
+
+  assert {
+    condition     = google_org_policy_policy.this.name == "folders/123456789012/policies/compute.requireOsLogin"
+    error_message = "Policy name must be folders/<id>/policies/<constraint> when parent is a folder."
+  }
+
+  assert {
+    condition     = google_org_policy_policy.this.parent == "folders/123456789012"
+    error_message = "Parent must be passed through unchanged."
+  }
+}
+
+run "organization_parent_builds_the_organization_policy_name" {
+  variables {
+    project_id = null
+    parent     = "organizations/456"
+    constraint = "constraints/gcp.resourceLocations"
+    rules      = [{ allowed_values = ["in:eu-locations"] }]
+  }
+
+  assert {
+    condition     = google_org_policy_policy.this.name == "organizations/456/policies/gcp.resourceLocations"
+    error_message = "Policy name must be organizations/<id>/policies/<constraint> when parent is an organization."
+  }
+
+  assert {
+    condition     = google_org_policy_policy.this.parent == "organizations/456"
+    error_message = "Parent must be passed through unchanged."
+  }
+}
+
+run "project_parent_matches_project_id_shorthand" {
+  variables {
+    project_id = null
+    parent     = "projects/example-project"
+  }
+
+  assert {
+    condition     = google_org_policy_policy.this.name == "projects/example-project/policies/compute.requireOsLogin"
+    error_message = "parent = \"projects/x\" must build the same name as project_id = \"x\", otherwise switching between them replaces the policy."
+  }
+}
+
+run "rejects_both_project_id_and_parent" {
+  command = plan
+
+  variables {
+    parent = "folders/123456789012"
+  }
+
+  expect_failures = [google_org_policy_policy.this]
+}
+
+run "rejects_neither_project_id_nor_parent" {
+  command = plan
+
+  variables {
+    project_id = null
+  }
+
+  expect_failures = [google_org_policy_policy.this]
+}
+
+run "rejects_parent_with_an_unknown_kind" {
+  command = plan
+
+  variables {
+    project_id = null
+    parent     = "billingAccounts/0123AB"
+  }
+
+  expect_failures = [var.parent]
+}
+
+run "rejects_folder_parent_given_by_name" {
+  command = plan
+
+  variables {
+    project_id = null
+    parent     = "folders/engineering"
+  }
+
+  expect_failures = [var.parent]
+}
+
+run "rejects_bare_parent_id" {
+  command = plan
+
+  variables {
+    project_id = null
+    parent     = "123456789012"
+  }
+
+  expect_failures = [var.parent]
+}

@@ -5,6 +5,11 @@ locals {
   # recognise is still accepted on create and simply never matches a constraint.
   constraint = replace(var.constraint, "/^constraints\\//", "")
 
+  # project_id is shorthand for parent = "projects/<id>". Exactly one of the two
+  # is set; the precondition on the resource reports the error, this only keeps
+  # the expression from failing first when neither is.
+  parent = var.parent != null ? var.parent : (var.project_id != null ? "projects/${var.project_id}" : null)
+
   boolean_fallback = [
     {
       enforce        = var.boolean_enforced
@@ -29,8 +34,8 @@ locals {
 }
 
 resource "google_org_policy_policy" "this" {
-  name   = "projects/${var.project_id}/policies/${local.constraint}"
-  parent = "projects/${var.project_id}"
+  name   = "${local.parent}/policies/${local.constraint}"
+  parent = local.parent
 
   spec {
     # Unset by default. For list constraints an unset (false) value makes this
@@ -54,6 +59,13 @@ resource "google_org_policy_policy" "this" {
           }
         }
       }
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = (var.project_id == null) != (var.parent == null)
+      error_message = "Set exactly one of project_id or parent: project_id = \"x\" is shorthand for parent = \"projects/x\"."
     }
   }
 }
