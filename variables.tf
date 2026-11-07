@@ -101,3 +101,62 @@ variable "rules" {
     error_message = "allow_all and deny_all may only be set to true; the API only recognises \"TRUE\", so a false value produces a rule that applies cleanly and does nothing. Omit the attribute instead."
   }
 }
+
+variable "enforce" {
+  description = <<-EOT
+    Whether the live policy (spec) is applied. Defaults to true. Set it to false
+    together with dry_run to ship the dry-run spec only: violations are reported
+    in audit logs and nothing is blocked. Unrelated to boolean_enforced, which is
+    the value of the boolean rule inside the live spec.
+  EOT
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "dry_run" {
+  description = <<-EOT
+    Optional dry-run spec (dry_run_spec), evaluated alongside or, with
+    enforce = false, instead of the live policy. Violations show up in audit
+    logs without being blocked. rules has the same shape and rules as the rules
+    input; inherit_from_parent behaves as the top-level input of the same name.
+  EOT
+  type = object({
+    rules = list(object({
+      enforce        = optional(bool)
+      allow_all      = optional(bool)
+      deny_all       = optional(bool)
+      allowed_values = optional(list(string))
+      denied_values  = optional(list(string))
+    }))
+    inherit_from_parent = optional(bool)
+  })
+  default = null
+
+  validation {
+    condition     = var.dry_run == null || try(length(var.dry_run.rules) > 0, false)
+    error_message = "dry_run.rules must not be empty: a dry-run spec with no rules reports nothing."
+  }
+
+  validation {
+    condition = var.dry_run == null || alltrue([
+      for rule in try(var.dry_run.rules, []) : length([
+        for kind in [
+          rule.enforce != null,
+          rule.allow_all != null,
+          rule.deny_all != null,
+          rule.allowed_values != null || rule.denied_values != null,
+        ] : kind if kind
+      ]) == 1
+    ])
+    error_message = "Each dry_run rule must set exactly one of enforce, allow_all, deny_all, or values (allowed_values / denied_values)."
+  }
+
+  validation {
+    condition = var.dry_run == null || alltrue([
+      for rule in try(var.dry_run.rules, []) :
+      (rule.allow_all == null || rule.allow_all) && (rule.deny_all == null || rule.deny_all)
+    ])
+    error_message = "dry_run rules may set allow_all and deny_all to true only; omit the attribute instead of setting it to false."
+  }
+}
