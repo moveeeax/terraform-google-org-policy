@@ -6,6 +6,13 @@ All notable changes to this module are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `parent` input to attach the policy to a folder (`folders/<id>`) or the
+  organization (`organizations/<id>`) as well as a project. `project_id` stays
+  as shorthand for `parent = "projects/<id>"` and is now optional; exactly one
+  of the two must be set. Existing `project_id` callers plan no change.
+
 ### Changed
 
 - CI: bump actions to their current majors, pin tool versions, and restrict the
